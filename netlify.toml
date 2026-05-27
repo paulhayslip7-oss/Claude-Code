@@ -1,0 +1,18 @@
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+[build.environment]
+  NODE_VERSION = "20"
+  # Prisma's binary engine needs the OpenSSL hint on Netlify's build image.
+  PRISMA_CLI_BINARY_TARGETS = "rhel-openssl-3.0.x"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
+# Stripe webhook signature verification needs the raw body — let it flow
+# through Netlify untouched.
+[[headers]]
+  for = "/api/stripe/webhook"
+  [headers.values]
+    "Cache-Control" = "no-store"

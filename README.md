@@ -7,16 +7,20 @@ Digital storefront for Ironman participants:
 3. **Strava OAuth** (optional, after purchase) overlays the participant's last 3 months of training onto the recap
 4. **Admin portal** to upload [CoachCox](https://www.coachcox.co.uk/) race-result CSVs — rows are parsed and imported automatically
 
-Built with Next.js 14 (App Router) + TypeScript + Prisma/SQLite + Stripe + Tailwind.
+Built with Next.js 14 (App Router) + TypeScript + Prisma/Postgres + Stripe + Tailwind. Deploys to Netlify.
 
 ---
 
 ## Local setup
 
+You need a Postgres instance. Easiest options: a free [Neon](https://neon.tech)
+project (same DB you'll use in prod), `brew install postgresql`, or
+`docker run -e POSTGRES_PASSWORD=pw -p 5432:5432 -d postgres:16`.
+
 ```bash
 npm install
-cp .env.example .env        # fill in Stripe + Strava keys, ADMIN_PASSWORD, SESSION_SECRET
-npx prisma db push          # create SQLite schema at prisma/dev.db
+cp .env.example .env        # fill in DATABASE_URL, Stripe + Strava keys, ADMIN_PASSWORD, SESSION_SECRET
+npx prisma db push          # apply schema to your Postgres
 npm run db:seed             # optional: a fake race + 3 participants
 npm run dev
 ```
@@ -121,14 +125,69 @@ sessions, average HR) and persisted as JSON on the `Purchase` row.
 
 ---
 
-## Deploying
+## Deploying to Netlify
 
-- **Vercel** is the path of least resistance. Set the env vars from
-  `.env.example`, swap `DATABASE_URL` to a managed Postgres (Neon, Supabase,
-  RDS) and change the Prisma `provider` to `postgresql`.
-- Register the deployed `/api/stripe/webhook` endpoint in the Stripe
-  dashboard (live mode) and update `STRIPE_WEBHOOK_SECRET`.
-- Update the Strava app's Authorization Callback Domain to the prod host.
+`netlify.toml` is already wired up (`@netlify/plugin-nextjs`, Node 20, the
+right Prisma binary target). The build runs `prisma generate && prisma db push`
+to apply the schema to your Postgres before `next build`.
+
+**One-time setup:**
+
+1. **Create a Postgres database.**
+   [Neon](https://neon.tech) free tier is the smoothest fit (serverless +
+   pooler built in). Grab two URLs from the dashboard:
+   - **Pooled** connection string → `DATABASE_URL`
+   - **Direct** connection string → `DIRECT_DATABASE_URL`
+
+2. **Connect the repo in Netlify.**
+   netlify.com → "Add new site" → "Import from Git" → pick this repo and
+   the branch you want to deploy. Netlify will detect `netlify.toml`.
+
+3. **Create a Strava API app** at <https://www.strava.com/settings/api>.
+   Set the *Authorization Callback Domain* to your Netlify subdomain
+   (e.g. `your-site.netlify.app`). Note the Client ID + Secret.
+
+4. **Set environment variables in Netlify** (Site settings → Environment
+   variables). Mirror `.env.example`:
+
+   | Variable | Value |
+   | --- | --- |
+   | `DATABASE_URL` | Neon **pooled** URL |
+   | `DIRECT_DATABASE_URL` | Neon **direct** URL |
+   | `STRIPE_SECRET_KEY` | `sk_live_…` (or `sk_test_…` to start) |
+   | `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | `pk_live_…` |
+   | `STRIPE_WEBHOOK_SECRET` | Filled in after step 6 |
+   | `REPORT_PRICE_CENTS` | `500` |
+   | `APP_URL` | `https://<your-site>.netlify.app` |
+   | `ADMIN_PASSWORD` | Pick something strong |
+   | `SESSION_SECRET` | 32+ random characters (`openssl rand -hex 32`) |
+   | `STRAVA_CLIENT_ID` | From step 3 |
+   | `STRAVA_CLIENT_SECRET` | From step 3 |
+
+5. **Deploy.** Netlify builds; first build creates all tables in Postgres
+   via `prisma db push`.
+
+6. **Wire up the Stripe webhook.** In the Stripe Dashboard →
+   Developers → Webhooks → "Add endpoint":
+   - URL: `https://<your-site>.netlify.app/api/stripe/webhook`
+   - Event: `checkout.session.completed`
+   Copy the generated signing secret (`whsec_…`) into the Netlify env var
+   `STRIPE_WEBHOOK_SECRET`, then redeploy (Netlify → Deploys → Trigger deploy).
+
+7. **First-time admin flow.** Visit `/admin`, sign in with
+   `ADMIN_PASSWORD`, upload a CoachCox CSV. Done — the public search at
+   `/` should now return results.
+
+### Notes
+
+- `prisma db push` is used in the build because it's zero-config. Once
+  you start iterating on the schema in production, switch to
+  `prisma migrate dev` locally + `prisma migrate deploy` in the build to
+  get versioned migrations.
+- Neon's `directUrl` is required because Prisma's schema-sync commands
+  need a non-pooled connection.
+- If you outgrow Neon, Supabase / Railway / RDS work the same way — just
+  swap the two URLs.
 
 ## Safety / TODO
 

@@ -1,0 +1,60 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Race {
+  id           String        @id @default(cuid())
+  name         String
+  date         DateTime
+  location     String?
+  pdfFilename  String?
+  createdAt    DateTime      @default(now())
+  participants Participant[]
+}
+
+model Participant {
+  id             String     @id @default(cuid())
+  raceId         String
+  race           Race       @relation(fields: [raceId], references: [id], onDelete: Cascade)
+  bib            String?
+  firstName      String
+  lastName       String
+  country        String?
+  ageGroup       String?
+  gender         String?
+  swimSeconds    Int?
+  t1Seconds      Int?
+  bikeSeconds    Int?
+  t2Seconds      Int?
+  runSeconds     Int?
+  totalSeconds   Int?
+  overallRank    Int?
+  divisionRank   Int?
+  genderRank     Int?
+  purchases      Purchase[]
+
+  @@index([raceId, lastName])
+  @@index([raceId, bib])
+}
+
+model Purchase {
+  id                String      @id @default(cuid())
+  participantId     String
+  participant       Participant @relation(fields: [participantId], references: [id])
+  email             String
+  stripeSessionId   String      @unique
+  status            String      @default("pending") // pending | paid | refunded
+  amountCents       Int
+  stravaAccessToken String?
+  stravaRefreshToken String?
+  stravaExpiresAt   Int?
+  stravaAthleteId   String?
+  stravaInsightsJson String?
+  createdAt         DateTime    @default(now())
+  paidAt            DateTime?
+}

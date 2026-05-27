@@ -1,4 +1,7 @@
+# This repo can host multiple projects. The Ironman recap app lives in
+# ironman-recap/ — Netlify builds from there.
 [build]
+  base = "ironman-recap"
   command = "npm run build"
   publish = ".next"
 

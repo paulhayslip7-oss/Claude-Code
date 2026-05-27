@@ -52,18 +52,13 @@ model Participant {
 }
 
 model Purchase {
-  id                 String      @id @default(cuid())
-  participantId      String
-  participant        Participant @relation(fields: [participantId], references: [id])
-  email              String
-  stripeSessionId    String      @unique
-  status             String      @default("pending") // pending | paid | refunded
-  amountCents        Int
-  stravaAccessToken  String?
-  stravaRefreshToken String?
-  stravaExpiresAt    Int?
-  stravaAthleteId    String?
-  stravaInsightsJson String?
-  createdAt          DateTime    @default(now())
-  paidAt             DateTime?
+  id              String      @id @default(cuid())
+  participantId   String
+  participant     Participant @relation(fields: [participantId], references: [id])
+  email           String
+  stripeSessionId String      @unique
+  status          String      @default("pending") // pending | paid | refunded
+  amountCents     Int
+  createdAt       DateTime    @default(now())
+  paidAt          DateTime?
 }

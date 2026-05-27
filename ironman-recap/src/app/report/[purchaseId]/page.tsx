@@ -2,8 +2,6 @@ import { prisma } from "@/lib/prisma";
 import { stripe } from "@/lib/stripe";
 import { formatDuration } from "@/lib/format";
 import { notFound } from "next/navigation";
-import StravaConnect from "@/components/StravaConnect";
-import TrainingInsightsPanel from "@/components/TrainingInsightsPanel";
 
 export const dynamic = "force-dynamic";
 
@@ -63,8 +61,6 @@ export default async function ReportPage({ params }: { params: { purchaseId: str
     p.divisionRank && totals.length
       ? Math.round((1 - p.divisionRank / totals.length) * 100)
       : null;
-
-  const insights = purchase.stravaInsightsJson ? JSON.parse(purchase.stravaInsightsJson) : null;
 
   return (
     <div>
@@ -132,14 +128,6 @@ export default async function ReportPage({ params }: { params: { purchaseId: str
         )}
       </section>
 
-      <section className="mb-8 border border-neutral-800 rounded-lg p-6">
-        <h2 className="text-lg font-semibold mb-2">Training context (last 3 months)</h2>
-        {insights ? (
-          <TrainingInsightsPanel insights={insights} />
-        ) : (
-          <StravaConnect purchaseId={purchase.id} />
-        )}
-      </section>
     </div>
   );
 }

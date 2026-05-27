@@ -35,10 +35,9 @@ export default async function ParticipantPage({ params }: { params: { id: string
         <ul className="text-neutral-400 text-sm space-y-1 mb-5 list-disc pl-5">
           <li>Full split breakdown including T1/T2</li>
           <li>Overall, gender, and division ranks with percentile</li>
+          <li>Per-discipline age-group ranks (swim / bike / run)</li>
           <li>Comparison vs. age-group median</li>
-          <li>
-            Optional: connect Strava to overlay your last 3 months of training
-          </li>
+          <li>Championship qualifier status</li>
         </ul>
         <CheckoutButton participantId={participant.id} />
       </div>

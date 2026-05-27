@@ -32,8 +32,8 @@ export default async function HomePage({
       <section className="text-center mb-10">
         <h1 className="text-4xl font-bold mb-3">Your race, in detail.</h1>
         <p className="text-neutral-400 mb-6">
-          Find your finish, unlock a $5 personalized recap — splits, ranks, and (optionally) your
-          last 3 months of Strava training laid against the data.
+          Find your finish, unlock a $5 personalized recap — splits, per-discipline
+          age-group ranks, division percentile, and championship qualifier status.
         </p>
         <SearchForm races={races} defaultQ={q} defaultRaceId={raceId} />
       </section>

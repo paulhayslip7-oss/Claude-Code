@@ -7,7 +7,7 @@ they don't share dependencies, build config, or deploy targets.
 
 | Path | What it is |
 | --- | --- |
-| [`ironman-recap/`](./ironman-recap) | Digital storefront where Ironman participants search their result and buy a $5 personalized recap. Stripe Checkout + Strava OAuth + admin CSV importer. Deploys to Netlify. |
+| [`ironman-recap/`](./ironman-recap) | Digital storefront where Ironman participants search their result and buy a $5 personalized recap. Stripe Checkout + admin CSV importer. Deploys to Netlify. |
 
 ## Adding another project
 

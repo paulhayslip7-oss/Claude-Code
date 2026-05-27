@@ -47,9 +47,14 @@ export default async function ReportPage({ params }: { params: { purchaseId: str
   const p = purchase.participant;
   const r = p.race;
 
-  // Cohort comparison: median in division
+  // Cohort comparison: median finish in the same division (finishers only)
   const division = await prisma.participant.findMany({
-    where: { raceId: r.id, ageGroup: p.ageGroup ?? undefined, totalSeconds: { not: null } },
+    where: {
+      raceId: r.id,
+      ageGroup: p.ageGroup ?? undefined,
+      totalSeconds: { not: null },
+      finishStatus: "FIN",
+    },
     select: { totalSeconds: true },
   });
   const totals = division.map((d) => d.totalSeconds!).sort((a, b) => a - b);
@@ -85,18 +90,30 @@ export default async function ReportPage({ params }: { params: { purchaseId: str
 
       <section className="mb-8">
         <h2 className="text-lg font-semibold mb-3">Ranks</h2>
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-3 gap-3 mb-3">
           <Stat label="Overall" value={p.overallRank?.toString() ?? "—"} />
           <Stat label="Gender" value={p.genderRank?.toString() ?? "—"} />
           <Stat
-            label="Division"
+            label={`Division (${p.ageGroup ?? "—"})`}
             value={
               p.divisionRank
-                ? `${p.divisionRank}${percentile ? ` (top ${100 - percentile}%)` : ""}`
+                ? `${p.divisionRank}${percentile ? ` · top ${100 - percentile}%` : ""}`
                 : "—"
             }
           />
         </div>
+        <div className="grid grid-cols-3 gap-3">
+          <Stat label="Swim AG rank" value={p.swimDivisionRank?.toString() ?? "—"} />
+          <Stat label="Bike AG rank" value={p.bikeDivisionRank?.toString() ?? "—"} />
+          <Stat label="Run AG rank" value={p.runDivisionRank?.toString() ?? "—"} />
+        </div>
+        {p.qualified && (
+          <p className="mt-3 inline-block bg-yellow-500/15 border border-yellow-500/40 text-yellow-300 text-sm rounded px-3 py-1">
+            🏆 Qualifier slot earned
+            {p.qualifierRank ? ` — qualifier rank #${p.qualifierRank}` : ""}
+            {p.qualifierSeconds ? ` (${formatDuration(p.qualifierSeconds)})` : ""}
+          </p>
+        )}
         {median && (
           <p className="text-sm text-neutral-400 mt-3">
             Division median finish: <span className="font-mono">{formatDuration(median)}</span>

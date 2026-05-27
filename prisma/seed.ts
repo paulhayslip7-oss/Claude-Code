@@ -5,27 +5,42 @@ const prisma = new PrismaClient();
 async function main() {
   const race = await prisma.race.create({
     data: {
-      name: "IRONMAN Lake Placid 2025",
-      date: new Date("2025-07-20"),
-      location: "Lake Placid, NY",
+      name: "IRONMAN 70.3 Chattanooga 2026 (demo)",
+      date: new Date("2026-05-17"),
+      location: "Chattanooga, TN",
     },
   });
 
   const demo = [
-    { bib: "101", firstName: "Alex", lastName: "Morgan", ageGroup: "M30-34", gender: "M",
-      swimSeconds: 3720, t1Seconds: 180, bikeSeconds: 19800, t2Seconds: 150, runSeconds: 14400,
-      totalSeconds: 38250, overallRank: 42, divisionRank: 7, genderRank: 38 },
-    { bib: "204", firstName: "Jamie", lastName: "Chen", ageGroup: "F35-39", gender: "F",
-      swimSeconds: 4080, t1Seconds: 240, bikeSeconds: 21600, t2Seconds: 180, runSeconds: 16200,
-      totalSeconds: 42300, overallRank: 318, divisionRank: 11, genderRank: 64 },
-    { bib: "377", firstName: "Sam", lastName: "Patel", ageGroup: "M40-44", gender: "M",
-      swimSeconds: 4500, t1Seconds: 300, bikeSeconds: 23400, t2Seconds: 240, runSeconds: 18000,
-      totalSeconds: 46440, overallRank: 712, divisionRank: 89, genderRank: 540 },
+    {
+      bib: "364", firstName: "Jason", lastName: "George", country: "United States",
+      ageGroup: "M60-64", gender: "M",
+      swimSeconds: 2241, t1Seconds: 384, bikeSeconds: 8672, t2Seconds: 244, runSeconds: 5831,
+      totalSeconds: 17373, overallRank: 151, divisionRank: 1, genderRank: 126,
+      swimDivisionRank: 6, bikeDivisionRank: 1, runDivisionRank: 1,
+      finishStatus: "FIN", qualifierSeconds: 14231, qualifierRank: 1, qualified: true,
+    },
+    {
+      bib: "718", firstName: "Jeff", lastName: "Scarella", country: "United States",
+      ageGroup: "M45-49", gender: "M",
+      swimSeconds: 1989, t1Seconds: 249, bikeSeconds: 8292, t2Seconds: 122, runSeconds: 5353,
+      totalSeconds: 16004, overallRank: 59, divisionRank: 1, genderRank: 54,
+      swimDivisionRank: 8, bikeDivisionRank: 1, runDivisionRank: 4,
+      finishStatus: "FIN", qualifierSeconds: 14368, qualifierRank: 2, qualified: true,
+    },
+    {
+      bib: "1923", firstName: "Doug", lastName: "Covington", country: "United States",
+      ageGroup: "M55-59", gender: "M",
+      swimSeconds: 2178, t1Seconds: 344, bikeSeconds: 8720, t2Seconds: 199, runSeconds: 5435,
+      totalSeconds: 16877, overallRank: 108, divisionRank: 1, genderRank: 89,
+      swimDivisionRank: 5, bikeDivisionRank: 1, runDivisionRank: 1,
+      finishStatus: "FIN", qualifierSeconds: 14455, qualifierRank: 4, qualified: true,
+    },
   ];
 
-  for (const p of demo) {
-    await prisma.participant.create({ data: { raceId: race.id, ...p } });
-  }
+  await prisma.participant.createMany({
+    data: demo.map((p) => ({ raceId: race.id, ...p })),
+  });
 
   console.log(`Seeded race ${race.id} with ${demo.length} participants`);
 }

@@ -3,9 +3,9 @@
 Digital storefront for Ironman participants:
 
 1. **Public search** by last name / bib across imported races
-2. **$5 Stripe Checkout** unlocks a personalized recap (splits, ranks, division percentile)
+2. **$5 Stripe Checkout** unlocks a personalized recap (splits, per-discipline AG ranks, division percentile, Kona/championship qualifier flag)
 3. **Strava OAuth** (optional, after purchase) overlays the participant's last 3 months of training onto the recap
-4. **Admin portal** to upload race-result PDFs — the rows are parsed and imported automatically
+4. **Admin portal** to upload [CoachCox](https://www.coachcox.co.uk/) race-result CSVs — rows are parsed and imported automatically
 
 Built with Next.js 14 (App Router) + TypeScript + Prisma/SQLite + Stripe + Tailwind.
 
@@ -64,30 +64,42 @@ src/
 │       ├── strava/connect/route.ts       # Redirects to Strava OAuth
 │       ├── strava/callback/route.ts      # Fetches activities, computes insights
 │       ├── admin/login/route.ts
-│       └── admin/upload/route.ts         # Parses PDF, creates Race + Participants
+│       └── admin/upload/route.ts         # Parses CoachCox CSV, creates Race + Participants
 ├── lib/
-│   ├── prisma.ts        # Singleton client
-│   ├── stripe.ts        # Stripe SDK + price
-│   ├── strava.ts        # OAuth, activities fetch, insight aggregation
-│   ├── pdf-parser.ts    # Best-effort row scanner for Ironman result PDFs
-│   ├── auth.ts          # iron-session for admin
-│   └── format.ts        # H:MM:SS helpers
+│   ├── prisma.ts          # Singleton client
+│   ├── stripe.ts          # Stripe SDK + price
+│   ├── strava.ts          # OAuth, activities fetch, insight aggregation
+│   ├── results-parser.ts  # CoachCox CSV → ParsedParticipant[]
+│   ├── auth.ts            # iron-session for admin
+│   └── format.ts          # H:MM:SS helpers
 └── components/          # Client components for search, upload, checkout, Strava
 prisma/schema.prisma     # Race · Participant · Purchase
 ```
 
-### PDF parsing notes
+### CSV format (CoachCox)
 
-`src/lib/pdf-parser.ts` is a heuristic line-scanner tuned for the standard
-Ironman finisher PDF layout:
+`src/lib/results-parser.ts` reads the standard CoachCox export. Required
+header row:
 
 ```
-BIB  FIRST LAST  COUNTRY  AGE-GROUP/GENDER  SWIM  T1  BIKE  T2  RUN  FINISH  RANK  DIV-RANK  GENDER-RANK
+Bib,Name,Country,Gender,Division,
+Overall Time,Overall Rank,Gender Rank,Age Group Rank,
+Swim Time,Swim Rank,Gender Swim Rank,Age Group Swim Rank,
+Bike Time,Bike Rank,Gender Bike Rank,Age Group Bike Rank,
+Run Time,Run Rank,Gender Run Rank,Age Group Run Rank,
+Transition 1 Time,Transition 1 Rank,Gender Transition 1 Rank,Age Group Transition 1 Rank,
+Transition 2 Time,Transition 2 Rank,Gender Transition 2 Rank,Age Group Transition 2 Rank,
+Finish,Qualifier Time,Qualifier Rank,Gender Qualifier Rank,Qualified
 ```
 
-PDF layouts vary by event and year; extend the regexes in `parseRacePdf` (or
-add per-event adapters) when an import drops rows. The admin upload route
-returns the imported count so you can sanity-check against the PDF.
+Notes:
+- Times are parsed leniently — both `00:06:24` and `00:6:24` work.
+- `Finish` accepts `FIN`, `DNF`, `DNS`; only `FIN` participants are
+  included in division-median comparisons.
+- `Qualified` accepts `1`/`0` or `true`/`false`; the report shows a
+  championship-slot badge when true.
+- Rows that lack a Bib or Name are skipped silently. The admin upload route
+  returns the imported count so you can sanity-check against the file.
 
 ### Payment flow
 

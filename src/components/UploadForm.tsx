@@ -47,12 +47,16 @@ export default function UploadForm() {
           className="bg-neutral-950 border border-neutral-700 rounded px-3 py-2 md:col-span-2"
         />
         <input
-          name="pdf"
+          name="results"
           required
           type="file"
-          accept="application/pdf"
+          accept=".csv,text/csv"
           className="md:col-span-2 text-sm"
         />
+        <p className="md:col-span-2 text-xs text-neutral-500">
+          Upload a CoachCox results CSV (header row required: Bib, Name, Country, Gender, Division,
+          Overall Time, …, Qualified).
+        </p>
       </div>
       <button
         type="submit"
